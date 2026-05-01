@@ -99,9 +99,17 @@ class PIDController:
         # Proportional term
         p_term = self.kp * error
 
-        # Integral term (with anti-windup via output clamping)
+    
+        # Integral term with anti-windup clamping
         self._integral += error * self.dt
         i_term = self.ki * self._integral
+
+        # Clamp integral to prevent windup when output hits limits
+        min_lim, max_lim = self.output_limits
+        if self.ki != 0:
+            self._integral = max(min_lim / self.ki,
+                                 min(max_lim / self.ki,
+                                 self._integral))
 
         # Derivative term (based on error change)
         derivative = (error - self._prev_error) / self.dt
