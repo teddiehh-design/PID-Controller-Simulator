@@ -72,6 +72,7 @@ class PIDController:
         # Internal state
         self._integral: float = 0.0
         self._prev_error: float = 0.0
+        self._prev_measurement: float = 0.0
 
     def reset(self):
         """Reset internal integrator and previous error to zero."""
@@ -111,11 +112,12 @@ class PIDController:
                                  min(max_lim / self.ki,
                                  self._integral))
 
-        # Derivative term (based on error change)
-        derivative = (error - self._prev_error) / self.dt
+        # Derivative term (based on measurement change, avoids derivative kick)
+        derivative = -(measurement - self._prev_measurement) / self.dt
         d_term = self.kd * derivative
 
         self._prev_error = error
+        self._prev_measurement = measurement
 
         # Sum and clamp output
         output = p_term + i_term + d_term
@@ -183,10 +185,11 @@ class SecondOrderPlant:
         """Return the current plant output (second stage)."""
         return self._x2
 
-    def reset(self):
-        """Reset both internal states to zero."""
-        self._x1 = 0.0
-        self._x2 = 0.0
+def reset(self):
+        """Reset internal integrator, previous error and previous measurement to zero."""
+        self._integral = 0.0
+        self._prev_error = 0.0
+        self._prev_measurement = 0.0
 
     def step(self, control_input: float) -> float:
         """
